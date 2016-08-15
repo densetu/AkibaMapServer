@@ -3,10 +3,6 @@ class SpotLike{
 	private $id;
 	private $spotId;
 	
-	public function __construct($id,$spotId){
-		$this->id = $id;
-		$this->spotId = $spotId;
-	}
 	
 	public function getId(){
 		return $this->id;

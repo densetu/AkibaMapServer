@@ -3,10 +3,6 @@ class SpotCategory{
 	private $spotId;
 	private $categoryId;
 	
-	public function __construct($spotId,$categoryId){
-		$this->spotId = $spotId;
-		$this->categoryId = $categoryId;
-	}
 
 	public function getSpotId(){
 		return $this->spotId;

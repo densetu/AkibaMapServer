@@ -9,16 +9,6 @@ class Spot{
 	private $categoryId;
 	private $userId;
 	
-	public function __construct($id, $name, $address, $description, $lat, $lng, $categoryId, $userId){
-		$this->id = $id;
-		$this->name = $name;
-		$this->address = $address;
-		$this->description = $description;
-		$this->lat = $lat;
-		$this->lng = $lng;
-		$this->categoryId = $categoryId;
-		$this->userId = $userId;
-	}
 	
 	public function setId($id){
 		$this->id = $id;

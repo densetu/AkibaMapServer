@@ -3,10 +3,7 @@ class SpotImage{
     private $id;
     private $path;
 
-    public function __construct($id,$path){
-		$this->id = $id;
-		$this->path = $path;
-    }
+
     public function getId(){
         return $this->id;
     }

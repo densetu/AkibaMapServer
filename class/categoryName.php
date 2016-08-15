@@ -4,11 +4,6 @@ class CategoryName{
 	private $name;
 	private $parentId;
 	
-	public function __construct($id, $name, $parentId){
-		$this->id = $id;
-		$this->name = $name;
-		$this->parentId = $parentId;
-	}
 	
 	public function setId($id){
 		$this->id = $id;

@@ -71,6 +71,24 @@ class DBAccess{
 		}
 	}
 	
+	/*	spotテーブルのアクセスメソッド	
+		insertSpot($spot)
+			引数に渡したSpotインスタンスのデータを登録
+			戻り値 登録成功時 true、失敗時 false
+		updateSpot($spot)
+			引数に渡したSpotインスタンスのデータに更新
+			戻り値 更新成功時 true、失敗時 false
+		getSpotList()
+			全データを配列で取得
+			戻り値 全データのspotインスタンスの配列
+		getSpot($id)
+			引数で指定したidのデータのSpotインスタンスを取得
+			戻り値 spotインスタンス、データが無い場合はnull
+		deleteSpot($id)
+			引数で指定したidのデータを削除
+			戻り値 削除成功時 true、失敗時 false
+	*/
+	
 	public function insertSpot($spot){
 		try{
 			$this->pdo->beginTransaction();
@@ -124,7 +142,7 @@ class DBAccess{
 	
 	public function getSpotList(){
 		$spotList = array();
-		//TODO リストにデータのインスタンスを追加する処理
+		// リストにデータのインスタンスを追加する処理
 		try{
 			$sql = 'SELECT id, name, address, description, lat, lng, category_id, user_id
 				FROM spot
@@ -178,14 +196,37 @@ class DBAccess{
 	public function deleteSpot($id){
 		try{
 			$sql = 'DELETE FROM spot
-				WHERE id = :id';
+					WHERE id = :id';
 			$state = $this->pdo->prepare($sql);
 			$state->bindParam(':id', $id);
 			$state->execute();
-			return true;
+			return $state->rowCount() !== 0;
 		}catch(Exception $e){
 			return false;
 		}
+	}
+	
+	/*	spot_imagesテーブルのアクセスメソッド
+		insertSpotImage($spotImage)
+			引数に渡したSpotImageインスタンスのデータを登録
+			戻り値 登録成功時 true、失敗時 false
+		updateSpotImage($spotImage)
+			引数に渡したSpotImageインスタンスのデータに更新
+			戻り値 登録成功時 true、失敗時 false
+		getSpotImage($id)
+			引数で指定したidのデータを配列で取得
+			戻り値 指定したidのSpotImageインスタンス配列、データが存在しない場合は空の配列
+		deleteSpotImage($spotImage)
+			引数に渡したspotImageのデータを削除
+			戻り値 削除成功時 true、失敗時 false
+	*/
+	
+	public function insertSpotImage($spotImage){
+	
+	}
+	
+	public function updateSpotImage($spotImage){
+	
 	}
 	
 	public function getSpotImage($id){
@@ -204,5 +245,63 @@ class DBAccess{
 			return [];
 		}
 	}
+	
+	public function deleteSpotImage($spotImage){
+	
+	}
+	
+	/*	category_nameテーブルのアクセスメソッド
+		insertCategoryName($categoryName)
+			引数で渡したcategoryNameのデータを登録
+			戻り値 登録成功時 true、失敗時false
+		updateCategoryName($categoryName)
+			引数で渡したcategoryNameのデータに更新
+			戻り値 更新成功時 true、失敗時 false
+		getCategoryNameList()
+			全データを取得
+			戻り値 全データのCategoryNameインスタンスの配列
+		getCategoryName($id)
+			引数で指定したidのデータを取得
+			戻り値 CategoryNameインスタンス、データが無い場合はnull
+		deleteCategoryName($id)
+			引数で指定したidのデータを削除
+			戻り値 削除成功時 true、失敗時 false	
+	*/
+	
+	/*	spot_categoryテーブルのアクセスメソッド
+		insertSpotCategory($spotCategory)
+			引数で渡したspotCategoryのデータを登録
+			戻り値 登録成功時 true、失敗時 false
+		updateSpotCategory($spotCategory)
+			引数で渡したspotCategoryのデータに更新
+			戻り値 更新成功時 true、失敗時 false
+		getSpotCategoryBySID($spotId)
+			引数で指定したspotIdのデータを配列で取得
+			戻り値 SpotCategoryインスタンスの配列
+		getSpotCategoryByCID($categoryId)
+			引数で指定したcategoryIdのデータを配列で取得
+			戻り値 SpotCategoryインスタンスの配列
+		deleteSpotCategory($spotCategory)
+			引数で渡したspotCategoryのデータを削除
+			戻り値 削除成功時 true、失敗時 false
+	*/
+	
+	/*	spot_likeテーブルのアクセスメソッド
+		insertSpotLike($spotLike)
+			引数で渡したspotLikeのデータを登録
+			戻り値 登録成功時 true、失敗時 false
+		updateSpotLike($spotLike)
+			引数で渡したspotLikeのデータに更新
+			戻り値 更新成功時 true、失敗時 false
+		getSpotLikeByUID($userId)
+			引数で指定したuserIdのデータを配列で取得
+			戻り値 SpotLikeインスタンスの配列
+		getSpotLikeBySID($spotId)
+			引数で指定したspotIdのデータを配列で取得
+			戻り値 SpotLikeインスタンスの配列
+		deleteSpotLike($spotLike)
+			引数で渡したspotLikeのデータを削除
+			戻り値 削除成功時 true、失敗時 false
+	*/
 }
 ?>
