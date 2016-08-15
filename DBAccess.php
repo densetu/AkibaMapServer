@@ -124,6 +124,7 @@ class DBAccess{
 					user_id = :user_id
 				WHERE id = :id';
 			$state = $this->pdo->prepare($sql);
+			$state->bindParam(':id', $spot->getId());
 			$state->bindParam(':name', $spot->getName());
 			$state->bindParam(':address', $spot->getAddress());
 			$state->bindParam(':description', $spot->getDescription());
