@@ -124,7 +124,6 @@ class DBAccess{
 					user_id = :user_id
 				WHERE id = :id';
 			$state = $this->pdo->prepare($sql);
-			$state->bindParam(':id', $spot->getId());
 			$state->bindParam(':name', $spot->getName());
 			$state->bindParam(':address', $spot->getAddress());
 			$state->bindParam(':description', $spot->getDescription());
@@ -152,17 +151,16 @@ class DBAccess{
 			$state->execute();
 			$result = $stmt->fetchAll();
 			foreach($result as $row){
-				$spotList[] = 
-				new Spot(
-				$row['id'],
-				$row['name'],
-				$row['address'],
-				$row['description'],
-				$row['lat'],
-				$row['lng'],
-				$row['category_id'],
-				$row['user_id']
-				);
+				$spot = new Spot();
+				$spot->setId($row['id']);
+				$spot->setName($row['name']);
+				$spot->setAddress($row['address']);
+				$spot->setDescription($row['description']);
+				$spot->setLat($row['lat']);
+				$spot->setLng($row['lng']);
+				$spot->setCategoryId($row['category_id']);
+				$spot->setUserId($row['user_id']);
+				$spotList[] = $spot;
 			}
 			return $spotList;
 		}catch(Exception $e){
@@ -179,16 +177,17 @@ class DBAccess{
 			$state->bindParam(':id', $id);
 			$state->execute();
 			$row = $state->fetch();	
-			return new	Spot(
-			$row['id'],
-			$row['name'],
-			$row['address'],
-			$row['description'],
-			$row['lat'],
-			$row['lng'],
-			$row['category_id'],
-			$row['user_id']
-			);
+			
+			$spot = new Spot();
+			$spot->setId($row['id']);
+			$spot->setName($row['name']);
+			$spot->setAddress($row['address']);
+			$spot->setDescription($row['description']);
+			$spot->setLat($row['lat']);
+			$spot->setLng($row['lng']);
+			$spot->setCategoryId($row['category_id']);
+			$spot->setUserId($row['user_id']);
+			return $spot;
 		}catch(Exception $e){
 			return null;
 		}
