@@ -1,0 +1,11 @@
+<?php
+chdir(dirname(__FILE__)."/class");
+require_once("spot.php");
+require_once("spotLike.php");
+require_once("spotCategory.php");
+require_once("spotImages.php");
+require_once("categoryName.php");
+require_once("userData.php");
+require_once("user.php");
+chdir(dirname(__FILE__));
+define("DB_DATA","sqlite:.ht.db");
