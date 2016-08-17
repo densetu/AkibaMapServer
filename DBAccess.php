@@ -15,7 +15,7 @@ class DBAccess{
 			die(json_encode(["error"=>$e->getMessage()]));
 		}
 	}
-	
+
 	public function insertUser($user){
 		try{
 			$this->pdo->beginTransaction();
@@ -42,7 +42,7 @@ class DBAccess{
 			return false;
 		}
 	}
-	
+
 	public function getUser($id){
 		try{
 			$output = null;
@@ -70,8 +70,8 @@ class DBAccess{
 			return null;
 		}
 	}
-	
-	/*	spotテーブルのアクセスメソッド	
+
+	/*	spotテーブルのアクセスメソッド
 		insertSpot($spot)
 			引数に渡したSpotインスタンスのデータを登録
 			戻り値 登録成功時 true、失敗時 false
@@ -88,19 +88,20 @@ class DBAccess{
 			引数で指定したidのデータを削除
 			戻り値 削除成功時 true、失敗時 false
 	*/
-	
+
 	public function insertSpot($spot){
 		try{
 			$this->pdo->beginTransaction();
-			$sql = 'INSERT INTO spot(name, address, description, lat, lng, category_id, user_id)
-				VALUES(:name, :address, :description, :lat, :lng, :category_id, :user_id)';
+			$sql =
+				'INSERT INTO spot(name, address, description, lat, lng, category_id, user_id) --category_idはいらない？
+				 VALUES(:name, :address, :description, :lat, :lng, :category_id, :user_id)';
 			$state = $this->pdo->prepare($sql);
 			$state->bindParam(':name', $spot->getName());
 			$state->bindParam(':address', $spot->getAddress());
 			$state->bindParam(':description', $spot->getDescription());
 			$state->bindParam(':lat', $spot->getLat());
 			$state->bindParam(':lng', $spot->getLng());
-			$state->bindParam(':category_id', $spot->getCategoryId());
+			// $state->bindParam(':category_id', $spot->getCategoryId());
 			$state->bindParam(':user_id', $spot->getUserId());
 			$state->execute();
 			$this->pdo->commit();
@@ -110,26 +111,27 @@ class DBAccess{
 			return false;
 		}
 	}
-	
+
 	public function updateSpot($spot){
 		try{
 			$this->pdo->beginTransaction();
-			$sql = 'UPDATE spot
-				SET name = :name,
-					address = :address,
-					description = :description
-					lat = :lat,
-					lng = :lng,
-					category_id = :category_id,
-					user_id = :user_id
-				WHERE id = :id';
+			$sql =
+				'UPDATE spot
+				 SET	name = :name,
+				 			address = :address,
+							description = :description
+							lat = :lat,
+							lng = :lng,
+							-- category_id = :category_id,
+							user_id = :user_id
+				 WHERE id = :id';
 			$state = $this->pdo->prepare($sql);
 			$state->bindParam(':name', $spot->getName());
 			$state->bindParam(':address', $spot->getAddress());
 			$state->bindParam(':description', $spot->getDescription());
 			$state->bindParam(':lat', $spot->getLat());
 			$state->bindParam(':lng', $spot->getLng());
-			$state->bindParam(':category_id', $spot->getCategoryId());
+			// $state->bindParam(':category_id', $spot->getCategoryId());
 			$state->bindParam(':user_id', $spot->getUserId());
 			$state->execute();
 			$this->pdo->commit();
@@ -139,14 +141,15 @@ class DBAccess{
 			return false;
 		}
 	}
-	
+
 	public function getSpotList(){
 		$spotList = array();
 		// リストにデータのインスタンスを追加する処理
 		try{
-			$sql = 'SELECT id, name, address, description, lat, lng, category_id, user_id
-				FROM spot
-				ORDER BY id';
+			$sql =
+				'SELECT id, name, address, description, lat, lng, category_id, user_id
+				 FROM spot
+				 ORDER BY id';
 			$state = $this->pdo->prepare($sql);
 			$state->execute();
 			$result = $stmt->fetchAll();
@@ -158,7 +161,7 @@ class DBAccess{
 				$spot->setDescription($row['description']);
 				$spot->setLat($row['lat']);
 				$spot->setLng($row['lng']);
-				$spot->setCategoryId($row['category_id']);
+				// $spot->setCategoryId($row['category_id']);
 				$spot->setUserId($row['user_id']);
 				$spotList[] = $spot;
 			}
@@ -167,17 +170,18 @@ class DBAccess{
 			return array();
 		}
 	}
-	
+
 	public function getSpot($id){
 		try{
-			$sql = 'SELECT id, name, address, description, lat, lng, category_id, user_id
-				FROM spot
-				WHERE id = :id';
+			$sql =
+				'SELECT id, name, address, description, lat, lng, category_id, user_id
+				 FROM spot
+				 WHERE id = :id';
 			$state = $this->pdo->prepare($sql);
 			$state->bindParam(':id', $id);
 			$state->execute();
-			$row = $state->fetch();	
-			
+			$row = $state->fetch();
+
 			$spot = new Spot();
 			$spot->setId($row['id']);
 			$spot->setName($row['name']);
@@ -185,33 +189,39 @@ class DBAccess{
 			$spot->setDescription($row['description']);
 			$spot->setLat($row['lat']);
 			$spot->setLng($row['lng']);
-			$spot->setCategoryId($row['category_id']);
+//			$spot->setCategoryId($row['category_id']);
 			$spot->setUserId($row['user_id']);
 			return $spot;
 		}catch(Exception $e){
 			return null;
 		}
 	}
-	
+
 	public function deleteSpot($id){
 		try{
-			$sql = 'DELETE FROM spot
-					WHERE id = :id';
+			$this->pdo->beginTransaction();
+			$sql =
+				'DELETE FROM spot
+				 WHERE id = :id';
 			$state = $this->pdo->prepare($sql);
 			$state->bindParam(':id', $id);
-			$state->execute();
-			return $state->rowCount() !== 0;
+			if(deleteSpotLikeBySID($id)){
+				$state->execute();
+				$this->pdo->commit();
+				return $state->rowCount() !== 0;
+			} else {
+				$this->pdo->rollback();
+				return false;
+			}
 		}catch(Exception $e){
+			$this->pdo->rollback();
 			return false;
 		}
 	}
-	
+
 	/*	spot_imagesテーブルのアクセスメソッド
 		insertSpotImage($spotImage)
 			引数に渡したSpotImageインスタンスのデータを登録
-			戻り値 登録成功時 true、失敗時 false
-		updateSpotImage($spotImage)
-			引数に渡したSpotImageインスタンスのデータに更新
 			戻り値 登録成功時 true、失敗時 false
 		getSpotImage($id)
 			引数で指定したidのデータを配列で取得
@@ -219,16 +229,30 @@ class DBAccess{
 		deleteSpotImage($spotImage)
 			引数に渡したspotImageのデータを削除
 			戻り値 削除成功時 true、失敗時 false
+		deleteAllSpotImage($spotId)
+			引数で指定したidのデータを全て削除
+			戻り値 削除成功時 true、失敗時 false
 	*/
-	
+
 	public function insertSpotImage($spotImage){
-	
+		$sql =
+			'INSERT INTO spot_images(id, path)
+			 VALUES (:id, :path)';
+		try{]
+			$this->pdo->beginTransaction();
+			$state = $this->pdo->prepare($sql);
+			$state->bindParam(':id', $spotImage->getId());
+			$state->bindParam(':path', $spotImage->getPath());
+			$state->execute();
+			$this->pdo->commit();
+			return true;
+		}catch(Exception $e){
+			$this->pdo->rollback();
+			return false;
+		}
 	}
-	
-	public function updateSpotImage($spotImage){
-	
-	}
-	
+
+
 	public function getSpotImage($id){
 		try{
 			$output = [];
@@ -245,11 +269,11 @@ class DBAccess{
 			return [];
 		}
 	}
-	
+
 	public function deleteSpotImage($spotImage){
-	
+
 	}
-	
+
 	/*	category_nameテーブルのアクセスメソッド
 		insertCategoryName($categoryName)
 			引数で渡したcategoryNameのデータを登録
@@ -265,16 +289,13 @@ class DBAccess{
 			戻り値 CategoryNameインスタンス、データが無い場合はnull
 		deleteCategoryName($id)
 			引数で指定したidのデータを削除
-			戻り値 削除成功時 true、失敗時 false	
+			戻り値 削除成功時 true、失敗時 false
 	*/
-	
+
 	/*	spot_categoryテーブルのアクセスメソッド
 		insertSpotCategory($spotCategory)
 			引数で渡したspotCategoryのデータを登録
 			戻り値 登録成功時 true、失敗時 false
-		updateSpotCategory($spotCategory)
-			引数で渡したspotCategoryのデータに更新
-			戻り値 更新成功時 true、失敗時 false
 		getSpotCategoryBySID($spotId)
 			引数で指定したspotIdのデータを配列で取得
 			戻り値 SpotCategoryインスタンスの配列
@@ -284,15 +305,15 @@ class DBAccess{
 		deleteSpotCategory($spotCategory)
 			引数で渡したspotCategoryのデータを削除
 			戻り値 削除成功時 true、失敗時 false
+		deleteAllSpotCategory($spotId)
+			引数で指定したidのデータを全て削除
+			戻り値 削除成功時 true、失敗時 false
 	*/
-	
+
 	/*	spot_likeテーブルのアクセスメソッド
 		insertSpotLike($spotLike)
 			引数で渡したspotLikeのデータを登録
 			戻り値 登録成功時 true、失敗時 false
-		updateSpotLike($spotLike)
-			引数で渡したspotLikeのデータに更新
-			戻り値 更新成功時 true、失敗時 false
 		getSpotLikeByUID($userId)
 			引数で指定したuserIdのデータを配列で取得
 			戻り値 SpotLikeインスタンスの配列
@@ -303,5 +324,54 @@ class DBAccess{
 			引数で渡したspotLikeのデータを削除
 			戻り値 削除成功時 true、失敗時 false
 	*/
+
+	public function insertSpotLike($spotLike){
+
+	}
+
+	public function getSpotLikeByUID($userId){
+
+	}
+
+	public function getSpotLikeBySID($spotId){
+
+	}
+
+	public function deleteSpotLike($spotLike){
+		try {
+			$this->pdo->beginTransaction();
+			$sql =
+				'DELETE FROM spot_like
+				 WHERE spot_id = :sid
+				 AND user_id = :uid';
+			$state = $this->pdo->prepare($sql);
+			$state->bindParam(':sid', $spotLike->getSpotId());
+			$state->bindParam(':uid', $spotLike->getId());
+			$state->execute();
+			$this->pdo->commit();
+			return $state->rowCount() !== 0;
+		} catch (Exception $e) {
+			$this->pdo->rollback();
+			return false;
+		}
+	}
+
+	private function deleteSpotLikeBySID($spotId){
+		try {
+			$this->pdo->beginTransaction();
+			$sql =
+				'DELETE FROM spot_like
+				 WHERE spot_id = :sid';
+			$state = $this->pdo->prepare($sql);
+			$state->bindParam(':sid', $spotId);
+			$state->execute();
+			$this->pdo->commit();
+			return $state->rowCount() !== 0;
+		} catch (Exception $e) {
+			$this->pdo->rollback();
+			return false;
+		}
+
+	}
 }
 ?>
