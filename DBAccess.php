@@ -95,15 +95,15 @@ class DBAccess{
 			$sql =
 				'INSERT INTO spot(name, address, description, lat, lng, category_id, user_id) --category_idはいらない？
 				 VALUES(:name, :address, :description, :lat, :lng, :category_id, :user_id)';
-			$state = $this->pdo->prepare($sql);
-			$state->bindParam(':name', $spot->getName());
-			$state->bindParam(':address', $spot->getAddress());
-			$state->bindParam(':description', $spot->getDescription());
-			$state->bindParam(':lat', $spot->getLat());
-			$state->bindParam(':lng', $spot->getLng());
-			// $state->bindParam(':category_id', $spot->getCategoryId());
-			$state->bindParam(':user_id', $spot->getUserId());
-			$state->execute();
+			$stmt = $this->pdo->prepare($sql);
+			$stmt->bindParam(':name', $spot->getName());
+			$stmt->bindParam(':address', $spot->getAddress());
+			$stmt->bindParam(':description', $spot->getDescription());
+			$stmt->bindParam(':lat', $spot->getLat());
+			$stmt->bindParam(':lng', $spot->getLng());
+			// $stmt->bindParam(':category_id', $spot->getCategoryId());
+			$stmt->bindParam(':user_id', $spot->getUserId());
+			$stmt->execute();
 			$this->pdo->commit();
 			return true;
 		}catch(Exception $e){
@@ -125,15 +125,15 @@ class DBAccess{
 							-- category_id = :category_id,
 							user_id = :user_id
 				 WHERE id = :id';
-			$state = $this->pdo->prepare($sql);
-			$state->bindParam(':name', $spot->getName());
-			$state->bindParam(':address', $spot->getAddress());
-			$state->bindParam(':description', $spot->getDescription());
-			$state->bindParam(':lat', $spot->getLat());
-			$state->bindParam(':lng', $spot->getLng());
-			// $state->bindParam(':category_id', $spot->getCategoryId());
-			$state->bindParam(':user_id', $spot->getUserId());
-			$state->execute();
+			$stmt = $this->pdo->prepare($sql);
+			$stmt->bindParam(':name', $spot->getName());
+			$stmt->bindParam(':address', $spot->getAddress());
+			$stmt->bindParam(':description', $spot->getDescription());
+			$stmt->bindParam(':lat', $spot->getLat());
+			$stmt->bindParam(':lng', $spot->getLng());
+			// $stmt->bindParam(':category_id', $spot->getCategoryId());
+			$stmt->bindParam(':user_id', $spot->getUserId());
+			$stmt->execute();
 			$this->pdo->commit();
 			return true;
 		}catch(Exception $e){
@@ -144,14 +144,13 @@ class DBAccess{
 
 	public function getSpotList(){
 		$spotList = array();
-		// リストにデータのインスタンスを追加する処理
 		try{
 			$sql =
 				'SELECT id, name, address, description, lat, lng, category_id, user_id
 				 FROM spot
 				 ORDER BY id';
-			$state = $this->pdo->prepare($sql);
-			$state->execute();
+			$stmt = $this->pdo->prepare($sql);
+			$stmt->execute();
 			$result = $stmt->fetchAll();
 			foreach($result as $row){
 				$spot = new Spot();
@@ -166,7 +165,8 @@ class DBAccess{
 				$spotList[] = $spot;
 			}
 			return $spotList;
-		}catch(Exception $e){
+		}catch(PDOException $e){
+			// throw new AccessException($e->getMessage());
 			return array();
 		}
 	}
@@ -177,10 +177,10 @@ class DBAccess{
 				'SELECT id, name, address, description, lat, lng, category_id, user_id
 				 FROM spot
 				 WHERE id = :id';
-			$state = $this->pdo->prepare($sql);
-			$state->bindParam(':id', $id);
-			$state->execute();
-			$row = $state->fetch();
+			$stmt = $this->pdo->prepare($sql);
+			$stmt->bindParam(':id', $id);
+			$stmt->execute();
+			$row = $stmt->fetch();
 
 			$spot = new Spot();
 			$spot->setId($row['id']);
@@ -192,7 +192,8 @@ class DBAccess{
 //			$spot->setCategoryId($row['category_id']);
 			$spot->setUserId($row['user_id']);
 			return $spot;
-		}catch(Exception $e){
+		}catch(PDOException $e){
+			// throw new AccessException($e->getMessage());
 			return null;
 		}
 	}
@@ -203,16 +204,11 @@ class DBAccess{
 			$sql =
 				'DELETE FROM spot
 				 WHERE id = :id';
-			$state = $this->pdo->prepare($sql);
-			$state->bindParam(':id', $id);
-			if(deleteSpotLikeBySID($id)){
-				$state->execute();
-				$this->pdo->commit();
-				return $state->rowCount() !== 0;
-			} else {
-				$this->pdo->rollback();
-				return false;
-			}
+			$stmt = $this->pdo->prepare($sql);
+			$stmt->bindParam(':id', $id);
+			$stmt->execute();
+			$this->pdo->commit();
+			return $stmt->rowCount() !== 0;
 		}catch(Exception $e){
 			$this->pdo->rollback();
 			return false;
@@ -238,12 +234,12 @@ class DBAccess{
 		$sql =
 			'INSERT INTO spot_images(id, path)
 			 VALUES (:id, :path)';
-		try{]
+		try{
 			$this->pdo->beginTransaction();
-			$state = $this->pdo->prepare($sql);
-			$state->bindParam(':id', $spotImage->getId());
-			$state->bindParam(':path', $spotImage->getPath());
-			$state->execute();
+			$stmt = $this->pdo->prepare($sql);
+			$stmt->bindParam(':id', $spotImage->getId());
+			$stmt->bindParam(':path', $spotImage->getPath());
+			$stmt->execute();
 			$this->pdo->commit();
 			return true;
 		}catch(Exception $e){
@@ -256,22 +252,67 @@ class DBAccess{
 	public function getSpotImage($id){
 		try{
 			$output = [];
-			$query = "select * from spot_images where id = :id;";
+			$query =
+				"SELECT id, path
+				 FROM spot_images
+				 WHERE id = :id;";
 			$stmt = $this->pdo->prepare($query);
 			$stmt->bindParam(":id",$id);
 			$stmt->execute();
 			$result = $stmt->fetchAll();
 			foreach($result as $row){
-				$output[] = new SpotImage($row["id"],$row["path"]);
+				$si = new SpotImage();
+				$si->setId($row['id']);
+				$si->setPath($row['path']);
+				$output[] = $si;
 			}
 			return $output;
-		}catch(Exception $e){
+		}catch(PDOException $e){
+			// throw new AccessException($e->getMessage());
 			return [];
 		}
 	}
 
 	public function deleteSpotImage($spotImage){
+			try{
+				$this->pdo->beginTransaction();
+				$sql =
+					'DELETE FROM spot_images
+					 WHERE id = :id
+					 AND path = :path';
+				$stmt = $this->pdo->prepare($sql);
+				$stmt->bindParam(':id', $spotImage->getId());
+				$stmt->bindParam(':path', $spotImage->getPath());
+				$stmt->execute();
+				$this->pdo->commit();
+				/*
+				if($stmt->rowCount() === 0){
+					throw new Exception('削除するレコードがありません');
+				}
+				*/
+				return $stmt->rowCount() > 0;
+			} catch(Exception $e) {
+				$this->pdo->rollback();
+				// throw new Exception('処理中に例外が発生しました');
+				return false;
+			}
+	}
 
+	public function deleteAllSpotImage($spotId){
+		try{
+			$this->pdo->beginTransaction();
+			$sql =
+				'DELETE FROM spot_images
+				 WHERE id = :id';
+			$stmt = $this->pdo->prepare($sql);
+			$stmt->bindParam(':id', $spotId);
+			$stmt->execute();
+			$this->pdo->commit();
+			return $stmt->rowCount() > 0;
+		} catch (Exception $e) {
+			$this->pdo->rollback;
+			return false;
+		}
 	}
 
 	/*	category_nameテーブルのアクセスメソッド
@@ -292,6 +333,106 @@ class DBAccess{
 			戻り値 削除成功時 true、失敗時 false
 	*/
 
+	public function insertCategoryName($categoryName){
+		try{
+			$this->pdo->beginTransaction();
+			$sql =
+				'INSERT INTO category_name(id, name, parent_id)
+				 VALUES (:id, :name, :p_id)';
+			$stmt = $this->pdo->prepare($sql);
+			$stmt->bindParam(':id', $categoryName->getId());
+			$stmt->bindParam(':name', $categoryName->getName());
+			$stmt->bindParam(':p_id', $categoryName->getParentId());
+			$stmt->execute();
+			$this->pdo->commit();
+			return $stmt->rowCount() > 0;
+		} catch (Exception $e){
+			$this->pdo->rollback();
+			return false;
+		}
+	}
+
+	public function updateCategoryName($categoryName){
+		try{
+			$this->pdo->beginTransaction();
+			$sql =
+				'UPDATE category_name
+				 SET name = :name
+				 		 parent_id = :p_id
+				 WHERE id = :id';
+			$stmt = $this->pdo->prepare($sql);
+			$stmt->bindParam(':id', $categoryName->getId());
+			$stmt->bindParam(':name', $categoryName->getName());
+			$stmt->bindParam(':p_id', $categoryName->getParentId());
+			$stmt->execute();
+			$this->pdo->commit();
+			return $stmt->rowCount() > 0;
+		} catch (Exception $e){
+			$this->pdo->rollback();
+			return false;
+	}
+
+	public function getCategoryNameList(){
+		$list = array();
+		try{
+			$sql =
+				'SELECT id, name, parent_id
+				 FROM category_name';
+			$stmt = $this->pdo->prepare($sql);
+			$result =	$stmt->fetchAll();
+			foreach ($result as $row) {
+				$cn = new CategoryName();
+				$cn->setId($row['id']);
+				$cn->setName($row['name']);
+				$cn->setParentId($row['parent_id']);
+				$list[] = $cn;
+			}
+			return $list;
+		} catch(PDOException $e){
+			// throw new AccessException($e->getMessage());
+			return array();
+		}
+	}
+
+	public function getCategoryName($id){
+		try{
+			$sql =
+				'SELECT id, name, parent_id
+				 FROM category_name
+				 WHERE id = :id';
+			$stmt = $this->pdo->prepare($sql);
+			$stmt->bindParam(':id', $id);
+			$stmt->execute();
+			$row = $stmt->fetch();
+
+			$cn = new CategoryName();
+			$cn->setId($row['id']);
+			$cn->setName($row['name']);
+			$cn->setParentId($row['parent_id']);
+			return $cn;
+		} catch (PDOException $e){
+			// throw new AccessException($e->getMessage());
+			return null;
+		}
+	}
+
+	public function deleteCategoryName($id){
+		try{
+			$this->pdo->beginTransaction();
+			$sql =
+				'DELETE FROM category_name
+				 WHERE id = :id';
+			$stmt = $this->pdo->prepare($sql);
+			$stmt->bindParam(':id', $id);
+			$stmt->execute();
+			$this->pdo->commit();
+			return $stmt->rowCount() > 0;
+		} catch (Exception $e) {
+			$this->pdo->rollback();
+			return false;
+		}
+	}
+
 	/*	spot_categoryテーブルのアクセスメソッド
 		insertSpotCategory($spotCategory)
 			引数で渡したspotCategoryのデータを登録
@@ -310,6 +451,113 @@ class DBAccess{
 			戻り値 削除成功時 true、失敗時 false
 	*/
 
+	public function insertSpotCategory($spotCategory){
+		try{
+			$this->pdo->beginTransaction();
+			$sql =
+				'INSERT INTO spot_category(spot_id, category_id)
+				 VALUES (:s_id, :c_id)';
+			$stmt = $this->pdo->prepare($sql);
+			$stmt->bindParam(':s_id', $spotCategory->getSpotId());
+			$stmt->bindParam(':c_id', $spotCategory->getCategoryId());
+			$stmt->execute();
+			$this->pdo->commit();
+			return true;
+		} catch (Exception $e){
+			$this->pdo->rollback();
+			return false;
+		}
+	}
+
+	public function getSpotCategoryBySID($spotId){
+		$list = array();
+		try{
+			$sql =
+				'SELECT spot_id, category_id
+				 FROM spot_category
+				 WHERE spot_id = :id';
+			$stmt = $this->pdo->prepare($sql);
+			$stmt->bindParam(':id', $spotId);
+			$stmt->execute;
+			$result = $stmt->fetchAll();
+			foreach ($result as $row) {
+				$sc = new SpotCategory();
+				$sc->setSpotId($row['spot_id']);
+				$sc->setCategoryId($row['category_id']);
+				$list[] = $sc;
+			}
+			return $list;
+		} catch (PDOException $e) {
+			// throw new AccessException($e->getMessage());
+			return null;
+		}
+	}
+
+	public function getSpotCategoryByCID($categoryId){
+		$list = array();
+		try{
+			$sql =
+				'SELECT spot_id, category_id
+				 FROM spot_category
+				 WHERE category_id = :id';
+			$stmt = $this->pdo->prepare($sql);
+			$stmt->bindParam(':id', $categoryId);
+			$stmt->execute;
+			$result = $stmt->fetchAll();
+			foreach ($result as $row) {
+				$sc = new SpotCategory();
+				$sc->setSpotId($row['spot_id']);
+				$sc->setCategoryId($row['category_id']);
+				$list[] = $sc;
+			}
+			return $list;
+		} catch (PDOException $e) {
+			// throw new AccessException($e->getMessage());
+			return null;
+		}
+	}
+
+	public function deleteSpotCategory($spotCategory){
+		// 引数で渡したspotCategoryのデータを削除
+		// 戻り値 削除成功時 true、失敗時 false
+		try{
+			$this->pdo->beginTransaction();
+			$sql =
+				'DELETE FROM spot_category
+				 WHERE spot_id = :s_id
+				 AND category_id = :c_id';
+			$stmt = $this->pdo->prepare($sql);
+			$stmt->bindParam(':s_id', $spotCategory->getSpotId());
+			$stmt->bindParam(':c_id', $spotCategory->getCategoryId());
+			$stmt->execute();
+			$this->pdo->commit();
+			return $stmt->rowCount() > 0;
+		} catch (Exception $e){
+			$this->pdo->rollback();
+			return false;
+		}
+	}
+
+	public function deleteAllSpotCategory($spotId){
+		// 引数で指定したidのデータを全て削除
+		// 戻り値 削除成功時 true、失敗時 false
+		try {
+			$this->pdo->beginTransaction();
+			$sql =
+				'DELETE FROM spot_category
+				 WHERE spot_id = :id';
+			$stmt = $this->pdo->prepare($sql);
+			$stmt->bindParam(':id', $spotId);
+			$stmt->execute();
+			$this->pdo->commit();
+			return $stmt->rowCount() > 0;
+		} catch (Exception $e) {
+			$this->pdo->rollback();
+			return false;
+		}
+
+	}
+
 	/*	spot_likeテーブルのアクセスメソッド
 		insertSpotLike($spotLike)
 			引数で渡したspotLikeのデータを登録
@@ -326,15 +574,75 @@ class DBAccess{
 	*/
 
 	public function insertSpotLike($spotLike){
+		// 引数で渡したspotLikeのデータを登録
+		// 戻り値 登録成功時 true、失敗時 false
+		try {
+			$this->pdo->beginTransaction();
+			$sql =
+				'INSERT INTO spot_like(user_id, spot_id)
+				 VALUES(:u_id, :s_id)';
+			$stmt = $this->pdo->prepare($sql);
+			$stmt->bindParam(':s_id', $spotLike->getSpotId());
+			$stmt->bindParam(':u_id', $spotLike->getId());
+			$stmt->execute();
+			$this->pdo->commit();
+			return true;
+		} catch (Exception $e) {
+			$this->pdo->rollback();
+			return false;
+		}
 
 	}
 
 	public function getSpotLikeByUID($userId){
-
+		// 引数で指定したuserIdのデータを配列で取得
+		// 戻り値 SpotLikeインスタンスの配列
+		$list = array();
+		try{
+			$sql =
+				'SELECT user_id, spot_id
+				 FROM spot_like
+				 WHERE user_id = :id';
+			$stmt = $this->pdo->prepare($sql);
+			$stmt = bindParam(':id', $userId);
+			$stmt->execute();
+			$result = $stmt->fetchAll();
+			foreach ($result as $row) {
+				$sl = new SpotLike();
+				$sl->setId($row['user_id']);
+				$sl->setSpotId($row['spot_id']);
+				$list[] = $sl;
+			}
+			return $list;
+		} catch (PDOException $e){
+			// throw new AccessException($e->getMessage());
+			return null;
+		}
 	}
 
 	public function getSpotLikeBySID($spotId){
-
+		// 引数で指定したspotIdのデータを配列で取得
+		// 戻り値 SpotLikeインスタンスの配列
+		try{
+			$sql =
+				'SELECT user_id, spot_id
+				 FROM spot_like
+				 WHERE spot_id = :id';
+			$stmt = $this->pdo->prepare($sql);
+			$stmt = bindParam(':id', $spotId);
+			$stmt->execute();
+			$result = $stmt->fetchAll();
+			foreach ($result as $row) {
+				$sl = new SpotLike();
+				$sl->setId($row['user_id']);
+				$sl->setSpotId($row['spot_id']);
+				$list[] = $sl;
+			}
+			return $list;
+		} catch (PDOException $e){
+			// throw new AccessException($e->getMessage());
+			return null;
+		}
 	}
 
 	public function deleteSpotLike($spotLike){
@@ -342,35 +650,35 @@ class DBAccess{
 			$this->pdo->beginTransaction();
 			$sql =
 				'DELETE FROM spot_like
-				 WHERE spot_id = :sid
-				 AND user_id = :uid';
-			$state = $this->pdo->prepare($sql);
-			$state->bindParam(':sid', $spotLike->getSpotId());
-			$state->bindParam(':uid', $spotLike->getId());
-			$state->execute();
+				 WHERE spot_id = :s_id
+				 AND user_id = :u_id';
+			$stmt = $this->pdo->prepare($sql);
+			$stmt->bindParam(':s_id', $spotLike->getSpotId());
+			$stmt->bindParam(':u_id', $spotLike->getId());
+			$stmt->execute();
 			$this->pdo->commit();
-			return $state->rowCount() !== 0;
+			return $stmt->rowCount() > 0;
 		} catch (Exception $e) {
 			$this->pdo->rollback();
 			return false;
 		}
 	}
 
-	private function deleteSpotLikeBySID($spotId){
-		try {
-			$this->pdo->beginTransaction();
-			$sql =
-				'DELETE FROM spot_like
-				 WHERE spot_id = :sid';
-			$state = $this->pdo->prepare($sql);
-			$state->bindParam(':sid', $spotId);
-			$state->execute();
-			$this->pdo->commit();
-			return $state->rowCount() !== 0;
-		} catch (Exception $e) {
-			$this->pdo->rollback();
-			return false;
-		}
+	// private function deleteSpotLikeBySID($spotId){
+	// 	try {
+	// 		$this->pdo->beginTransaction();
+	// 		$sql =
+	// 			'DELETE FROM spot_like
+	// 			 WHERE spot_id = :sid';
+	// 		$stmt = $this->pdo->prepare($sql);
+	// 		$stmt->bindParam(':sid', $spotId);
+	// 		$stmt->execute();
+	// 		$this->pdo->commit();
+	// 		return $stmt->rowCount() !== 0;
+	// 	} catch (Exception $e) {
+	// 		$this->pdo->rollback();
+	// 		return false;
+	// 	}
 
 	}
 }
