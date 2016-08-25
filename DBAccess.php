@@ -12,6 +12,10 @@ class DBAccess{
 			throw new AccessException($e->getMessage());
 		}
 	}
+	
+	public function __destruct(){
+		$this->pdo = null;
+	}
 
 	public function insertUser($user){
 		try{
