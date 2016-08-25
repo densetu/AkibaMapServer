@@ -9,10 +9,7 @@ class DBAccess{
 			$this->pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
 			$this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 		}catch(Exception $e){
-			if ($_SERVER['REQUEST_METHOD'] !== "GET") {
-				$this->pdo->rollback();
-			}
-			die(json_encode(["error"=>$e->getMessage()]));
+			throw new AccessException($e->getMessage());
 		}
 	}
 
@@ -365,6 +362,7 @@ class DBAccess{
 		} catch (Exception $e){
 			$this->pdo->rollback();
 			return false;
+		}
 	}
 
 	public function getCategoryNameList(){
@@ -674,7 +672,6 @@ class DBAccess{
 	// 		$this->pdo->rollback();
 	// 		return false;
 	// 	}
-
-	}
+	//}
 }
 ?>

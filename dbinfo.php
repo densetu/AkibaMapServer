@@ -1,5 +1,6 @@
 <?php
 chdir(dirname(__FILE__)."/class");
+require_once("AccessException.php");
 require_once("spot.php");
 require_once("spotLike.php");
 require_once("spotCategory.php");
