@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 トリガー
 
 CREATE TRIGGER spot_del
@@ -21,3 +22,27 @@ BEGIN
   SET user_id = (削除済みユーザーのid)
   WHERE user_id = OLD.id;
 END;
+=======
+トリガー
+
+CREATE TRIGGER spot_del
+DELETE ON spot
+BEGIN
+  DELETE FROM spot_like
+  WHERE spot_id = OLD.id;
+  DELETE FROM spot_images
+  WHERE id = OLD.id;
+  DELETE FROM spot_category
+  WHERE spot_id = OLD.id;
+END;
+
+
+あらかじめ削除済みユーザー用のデータを作っておく？
+CREATE TRIGGER user_del
+DELETE ON users
+BEGIN
+  UPDATE spot
+  SET user_id = (削除済みユーザーのid)
+  WHERE user_id = OLD.id;
+END;
+>>>>>>> 1d00cfc72dfdf9567ca7c9009cbbe88090106798
