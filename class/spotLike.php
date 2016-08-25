@@ -2,8 +2,8 @@
 class SpotLike{
 	private $id;
 	private $spotId;
-	
-	
+
+
 	public function getId(){
 		return $this->id;
 	}

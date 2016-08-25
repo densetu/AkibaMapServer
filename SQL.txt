@@ -12,6 +12,7 @@ BEGIN
 END;
 
 
+
 あらかじめ削除済みユーザー用のデータを作っておく？
 CREATE TRIGGER user_del
 DELETE ON users

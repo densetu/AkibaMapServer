@@ -93,7 +93,7 @@ class DBAccess{
 		try{
 			$this->pdo->beginTransaction();
 			$sql =
-				'INSERT INTO spot(name, address, description, lat, lng, category_id, user_id) --category_idはいらない？
+				'INSERT INTO spot(name, address, description, lat, lng, user_id)
 				 VALUES(:name, :address, :description, :lat, :lng, :category_id, :user_id)';
 			$stmt = $this->pdo->prepare($sql);
 			$stmt->bindParam(':name', $spot->getName());
@@ -101,7 +101,6 @@ class DBAccess{
 			$stmt->bindParam(':description', $spot->getDescription());
 			$stmt->bindParam(':lat', $spot->getLat());
 			$stmt->bindParam(':lng', $spot->getLng());
-			// $stmt->bindParam(':category_id', $spot->getCategoryId());
 			$stmt->bindParam(':user_id', $spot->getUserId());
 			$stmt->execute();
 			$this->pdo->commit();
@@ -122,7 +121,6 @@ class DBAccess{
 							description = :description
 							lat = :lat,
 							lng = :lng,
-							-- category_id = :category_id,
 							user_id = :user_id
 				 WHERE id = :id';
 			$stmt = $this->pdo->prepare($sql);
@@ -131,7 +129,6 @@ class DBAccess{
 			$stmt->bindParam(':description', $spot->getDescription());
 			$stmt->bindParam(':lat', $spot->getLat());
 			$stmt->bindParam(':lng', $spot->getLng());
-			// $stmt->bindParam(':category_id', $spot->getCategoryId());
 			$stmt->bindParam(':user_id', $spot->getUserId());
 			$stmt->execute();
 			$this->pdo->commit();
@@ -160,7 +157,6 @@ class DBAccess{
 				$spot->setDescription($row['description']);
 				$spot->setLat($row['lat']);
 				$spot->setLng($row['lng']);
-				// $spot->setCategoryId($row['category_id']);
 				$spot->setUserId($row['user_id']);
 				$spotList[] = $spot;
 			}
@@ -189,7 +185,6 @@ class DBAccess{
 			$spot->setDescription($row['description']);
 			$spot->setLat($row['lat']);
 			$spot->setLng($row['lng']);
-//			$spot->setCategoryId($row['category_id']);
 			$spot->setUserId($row['user_id']);
 			return $spot;
 		}catch(PDOException $e){

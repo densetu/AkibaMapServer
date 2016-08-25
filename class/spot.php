@@ -6,7 +6,6 @@ class Spot{
 	private $description;
 	private $lat;
 	private $lng;
-//	private $categoryId;	いらない？
 	private $userId;
 
 
@@ -57,14 +56,6 @@ class Spot{
 	public function getLng(){
 		return $this->lng;
 	}
-
-	// public function setCategoryId($categoryId){
-	// 	$this->categoryId = $categoryId;
-	// }
-	//
-	// public function getCategoryId(){
-	// 	return $this->categoryId;
-	// }
 
 	public function setUserId($userId){
 		$this->userId = $userId;
