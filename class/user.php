@@ -22,23 +22,23 @@ class User{
 	}
 	
 	public function getEmail(){
-		return $this->userdata instanceof EmailLoginUserData ? $this->userdata->email : null;
+		return $this->userdata instanceof EmailLoginUserData ? $this->userdata->getEmail() : null;
 	}
 	
 	public function getPassword(){
-		return $this->userdata instanceof EmailLoginUserData ? $this->userdata->password : null;
+		return $this->userdata instanceof EmailLoginUserData ? $this->userdata->getPassword() : null;
 	}
 	
 	public function getToken(){
-		return $this->userdata instanceof ServiceLoginUserData ? $this->userdata->token : null;
+		return $this->userdata instanceof ServiceLoginUserData ? $this->userdata->getToken() : null;
 	}
 	
 	public function getTokenSecret(){
-		return $this->userdata instanceof ServiceLoginUserData ? $this->userdata->tokenSecret : null;
+		return $this->userdata instanceof ServiceLoginUserData ? $this->userdata->getTokenSecret() : null;
 	}
 	
 	public function getService(){
-		return $this->userdata instanceof ServiceLoginUserData ? $this->userdata->service : null;
+		return $this->userdata instanceof ServiceLoginUserData ? $this->userdata->getService() : null;
 	}
 	
 	public function getIsEmailLoginUserData(){

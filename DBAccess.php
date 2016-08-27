@@ -25,21 +25,24 @@ class DBAccess{
 			"insert into users(name,email,password,admin) values(:name, :email, :password, :admin);":
 			"insert into users(name,token,tokenSecret,service,admin) values(:name, :token, :secret, :service, :admin);"
 			);
-			$stmt->bindParam(':id', $user->getId());
-			$stmt->bindParam(':name', $user->getName());
-			$stmt->bindParam(':email', $user->getEmail());
-			$stmt->bindParam(':password', $user->getPassword());
-			$stmt->bindParam(':token', $user->getToken());
-			$stmt->bindParam(':secret', $user->getTokenSecret());
-			$stmt->bindParam(':service', $user->getService());
-			$stmt->bindParam(':admin', $user->getAdmin());
+			$stmt->bindValue(':name', $user->getName());
+			if($user->getIsEmailLoginUserData()){
+				$stmt->bindValue(':email', $user->getEmail());
+				$stmt->bindValue(':password', $user->getPassword());
+			}else{
+				$stmt->bindValue(':token', $user->getToken());
+				$stmt->bindValue(':secret', $user->getTokenSecret());
+				$stmt->bindValue(':service', $user->getService());
+			}
+			$stmt->bindValue(':admin', $user->getAdmin());
 			$stmt->execute();
 			$this->pdo->commit();
-			return true;
+			return $stmt->rowCount() > 0;
 		}catch(Exception $e){
 			if ($_SERVER['REQUEST_METHOD'] !== "GET") {
 				$this->pdo->rollback();
 			}
+			echo $e->getMessage();
 			return false;
 		}
 	}
@@ -49,7 +52,7 @@ class DBAccess{
 			$output = null;
 			$query = "select * from users where id=:id;";
 			$stmt = $this->pdo->prepare($query);
-			$stmt->bindParam(":id",$id);
+			$stmt->bindValue(":id",$id);
 			$stmt->execute();
 			$result = $stmt->fetchAll();
 			foreach($result as $out){
@@ -68,6 +71,49 @@ class DBAccess{
 			if ($_SERVER['REQUEST_METHOD'] !== "GET") {
 				$this->pdo->rollback();
 			}
+			return null;
+		}
+	}
+
+	public function getUserByServiceLoginUserData($data){
+		try{
+			$output = null;
+			if($data instanceof ServiceLoginUserData)
+				return null;
+			$query = "select * from users where token=:token && tokenSecret=:secret && service=:service;";
+			$stmt = $this->pdo->prepare($query);
+			$stmt->bindValue(":token",$data->getToken());
+			$stmt->bindValue(":secret",$data->getTokenSecret());
+			$stmt->bindValue(":service",$data->getToken());
+			$stmt->execute();
+			$row = $stmt->fetch();
+			
+			$userdata = new ServiceLoginUserData($row["token"],$row["tokenSecret"],$row["service"]);
+			$output = new User($row["id"],$row["name"],$userdata,$row["admin"]);
+			$stmt = null;
+			return $output;
+		}catch(Exception $e){
+			return null;
+		}
+	}
+
+	public function getUserByEmailLoginUserData($data){
+		try{
+			$output = null;
+			if($data instanceof EmailLoginUserData)
+				return null;
+			$query = "select * from users where email=:email && password=:password;";
+			$stmt = $this->pdo->prepare($query);
+			$stmt->bindValue(":email",$data->getEmail());
+			$stmt->bindValue(":password",$data->getPassword());
+			$stmt->execute();
+			$row = $stmt->fetch();
+			
+			$userdata = new EmailLoginUserData($row["email"],$row["password"]);
+			$output = new User($row["id"],$row["name"],$userdata,$row["admin"]);
+			$stmt = null;
+			return $output;
+		}catch(Exception $e){
 			return null;
 		}
 	}
@@ -97,12 +143,12 @@ class DBAccess{
 				'INSERT INTO spot(name, address, description, lat, lng, user_id)
 				 VALUES(:name, :address, :description, :lat, :lng, :category_id, :user_id)';
 			$stmt = $this->pdo->prepare($sql);
-			$stmt->bindParam(':name', $spot->getName());
-			$stmt->bindParam(':address', $spot->getAddress());
-			$stmt->bindParam(':description', $spot->getDescription());
-			$stmt->bindParam(':lat', $spot->getLat());
-			$stmt->bindParam(':lng', $spot->getLng());
-			$stmt->bindParam(':user_id', $spot->getUserId());
+			$stmt->bindValue(':name', $spot->getName());
+			$stmt->bindValue(':address', $spot->getAddress());
+			$stmt->bindValue(':description', $spot->getDescription());
+			$stmt->bindValue(':lat', $spot->getLat());
+			$stmt->bindValue(':lng', $spot->getLng());
+			$stmt->bindValue(':user_id', $spot->getUserId());
 			$stmt->execute();
 			$this->pdo->commit();
 			return true;
@@ -125,12 +171,12 @@ class DBAccess{
 							user_id = :user_id
 				 WHERE id = :id';
 			$stmt = $this->pdo->prepare($sql);
-			$stmt->bindParam(':name', $spot->getName());
-			$stmt->bindParam(':address', $spot->getAddress());
-			$stmt->bindParam(':description', $spot->getDescription());
-			$stmt->bindParam(':lat', $spot->getLat());
-			$stmt->bindParam(':lng', $spot->getLng());
-			$stmt->bindParam(':user_id', $spot->getUserId());
+			$stmt->bindValue(':name', $spot->getName());
+			$stmt->bindValue(':address', $spot->getAddress());
+			$stmt->bindValue(':description', $spot->getDescription());
+			$stmt->bindValue(':lat', $spot->getLat());
+			$stmt->bindValue(':lng', $spot->getLng());
+			$stmt->bindValue(':user_id', $spot->getUserId());
 			$stmt->execute();
 			$this->pdo->commit();
 			return true;
@@ -175,7 +221,7 @@ class DBAccess{
 				 FROM spot
 				 WHERE id = :id';
 			$stmt = $this->pdo->prepare($sql);
-			$stmt->bindParam(':id', $id);
+			$stmt->bindValue(':id', $id);
 			$stmt->execute();
 			$row = $stmt->fetch();
 
@@ -201,7 +247,7 @@ class DBAccess{
 				'DELETE FROM spot
 				 WHERE id = :id';
 			$stmt = $this->pdo->prepare($sql);
-			$stmt->bindParam(':id', $id);
+			$stmt->bindValue(':id', $id);
 			$stmt->execute();
 			$this->pdo->commit();
 			return $stmt->rowCount() !== 0;
@@ -233,8 +279,8 @@ class DBAccess{
 		try{
 			$this->pdo->beginTransaction();
 			$stmt = $this->pdo->prepare($sql);
-			$stmt->bindParam(':id', $spotImage->getId());
-			$stmt->bindParam(':path', $spotImage->getPath());
+			$stmt->bindValue(':id', $spotImage->getId());
+			$stmt->bindValue(':path', $spotImage->getPath());
 			$stmt->execute();
 			$this->pdo->commit();
 			return true;
@@ -253,7 +299,7 @@ class DBAccess{
 				 FROM spot_images
 				 WHERE id = :id;";
 			$stmt = $this->pdo->prepare($query);
-			$stmt->bindParam(":id",$id);
+			$stmt->bindValue(":id",$id);
 			$stmt->execute();
 			$result = $stmt->fetchAll();
 			foreach($result as $row){
@@ -277,8 +323,8 @@ class DBAccess{
 					 WHERE id = :id
 					 AND path = :path';
 				$stmt = $this->pdo->prepare($sql);
-				$stmt->bindParam(':id', $spotImage->getId());
-				$stmt->bindParam(':path', $spotImage->getPath());
+				$stmt->bindValue(':id', $spotImage->getId());
+				$stmt->bindValue(':path', $spotImage->getPath());
 				$stmt->execute();
 				$this->pdo->commit();
 				/*
@@ -301,7 +347,7 @@ class DBAccess{
 				'DELETE FROM spot_images
 				 WHERE id = :id';
 			$stmt = $this->pdo->prepare($sql);
-			$stmt->bindParam(':id', $spotId);
+			$stmt->bindValue(':id', $spotId);
 			$stmt->execute();
 			$this->pdo->commit();
 			return $stmt->rowCount() > 0;
@@ -336,9 +382,9 @@ class DBAccess{
 				'INSERT INTO category_name(id, name, parent_id)
 				 VALUES (:id, :name, :p_id)';
 			$stmt = $this->pdo->prepare($sql);
-			$stmt->bindParam(':id', $categoryName->getId());
-			$stmt->bindParam(':name', $categoryName->getName());
-			$stmt->bindParam(':p_id', $categoryName->getParentId());
+			$stmt->bindValue(':id', $categoryName->getId());
+			$stmt->bindValue(':name', $categoryName->getName());
+			$stmt->bindValue(':p_id', $categoryName->getParentId());
 			$stmt->execute();
 			$this->pdo->commit();
 			return $stmt->rowCount() > 0;
@@ -357,9 +403,9 @@ class DBAccess{
 				 		 parent_id = :p_id
 				 WHERE id = :id';
 			$stmt = $this->pdo->prepare($sql);
-			$stmt->bindParam(':id', $categoryName->getId());
-			$stmt->bindParam(':name', $categoryName->getName());
-			$stmt->bindParam(':p_id', $categoryName->getParentId());
+			$stmt->bindValue(':id', $categoryName->getId());
+			$stmt->bindValue(':name', $categoryName->getName());
+			$stmt->bindValue(':p_id', $categoryName->getParentId());
 			$stmt->execute();
 			$this->pdo->commit();
 			return $stmt->rowCount() > 0;
@@ -398,7 +444,7 @@ class DBAccess{
 				 FROM category_name
 				 WHERE id = :id';
 			$stmt = $this->pdo->prepare($sql);
-			$stmt->bindParam(':id', $id);
+			$stmt->bindValue(':id', $id);
 			$stmt->execute();
 			$row = $stmt->fetch();
 
@@ -420,7 +466,7 @@ class DBAccess{
 				'DELETE FROM category_name
 				 WHERE id = :id';
 			$stmt = $this->pdo->prepare($sql);
-			$stmt->bindParam(':id', $id);
+			$stmt->bindValue(':id', $id);
 			$stmt->execute();
 			$this->pdo->commit();
 			return $stmt->rowCount() > 0;
@@ -455,8 +501,8 @@ class DBAccess{
 				'INSERT INTO spot_category(spot_id, category_id)
 				 VALUES (:s_id, :c_id)';
 			$stmt = $this->pdo->prepare($sql);
-			$stmt->bindParam(':s_id', $spotCategory->getSpotId());
-			$stmt->bindParam(':c_id', $spotCategory->getCategoryId());
+			$stmt->bindValue(':s_id', $spotCategory->getSpotId());
+			$stmt->bindValue(':c_id', $spotCategory->getCategoryId());
 			$stmt->execute();
 			$this->pdo->commit();
 			return true;
@@ -474,7 +520,7 @@ class DBAccess{
 				 FROM spot_category
 				 WHERE spot_id = :id';
 			$stmt = $this->pdo->prepare($sql);
-			$stmt->bindParam(':id', $spotId);
+			$stmt->bindValue(':id', $spotId);
 			$stmt->execute;
 			$result = $stmt->fetchAll();
 			foreach ($result as $row) {
@@ -498,7 +544,7 @@ class DBAccess{
 				 FROM spot_category
 				 WHERE category_id = :id';
 			$stmt = $this->pdo->prepare($sql);
-			$stmt->bindParam(':id', $categoryId);
+			$stmt->bindValue(':id', $categoryId);
 			$stmt->execute;
 			$result = $stmt->fetchAll();
 			foreach ($result as $row) {
@@ -524,8 +570,8 @@ class DBAccess{
 				 WHERE spot_id = :s_id
 				 AND category_id = :c_id';
 			$stmt = $this->pdo->prepare($sql);
-			$stmt->bindParam(':s_id', $spotCategory->getSpotId());
-			$stmt->bindParam(':c_id', $spotCategory->getCategoryId());
+			$stmt->bindValue(':s_id', $spotCategory->getSpotId());
+			$stmt->bindValue(':c_id', $spotCategory->getCategoryId());
 			$stmt->execute();
 			$this->pdo->commit();
 			return $stmt->rowCount() > 0;
@@ -544,7 +590,7 @@ class DBAccess{
 				'DELETE FROM spot_category
 				 WHERE spot_id = :id';
 			$stmt = $this->pdo->prepare($sql);
-			$stmt->bindParam(':id', $spotId);
+			$stmt->bindValue(':id', $spotId);
 			$stmt->execute();
 			$this->pdo->commit();
 			return $stmt->rowCount() > 0;
@@ -579,8 +625,8 @@ class DBAccess{
 				'INSERT INTO spot_like(user_id, spot_id)
 				 VALUES(:u_id, :s_id)';
 			$stmt = $this->pdo->prepare($sql);
-			$stmt->bindParam(':s_id', $spotLike->getSpotId());
-			$stmt->bindParam(':u_id', $spotLike->getId());
+			$stmt->bindValue(':s_id', $spotLike->getSpotId());
+			$stmt->bindValue(':u_id', $spotLike->getId());
 			$stmt->execute();
 			$this->pdo->commit();
 			return true;
@@ -601,7 +647,7 @@ class DBAccess{
 				 FROM spot_like
 				 WHERE user_id = :id';
 			$stmt = $this->pdo->prepare($sql);
-			$stmt = bindParam(':id', $userId);
+			$stmt = bindValue(':id', $userId);
 			$stmt->execute();
 			$result = $stmt->fetchAll();
 			foreach ($result as $row) {
@@ -626,7 +672,7 @@ class DBAccess{
 				 FROM spot_like
 				 WHERE spot_id = :id';
 			$stmt = $this->pdo->prepare($sql);
-			$stmt = bindParam(':id', $spotId);
+			$stmt = bindValue(':id', $spotId);
 			$stmt->execute();
 			$result = $stmt->fetchAll();
 			foreach ($result as $row) {
@@ -650,8 +696,8 @@ class DBAccess{
 				 WHERE spot_id = :s_id
 				 AND user_id = :u_id';
 			$stmt = $this->pdo->prepare($sql);
-			$stmt->bindParam(':s_id', $spotLike->getSpotId());
-			$stmt->bindParam(':u_id', $spotLike->getId());
+			$stmt->bindValue(':s_id', $spotLike->getSpotId());
+			$stmt->bindValue(':u_id', $spotLike->getId());
 			$stmt->execute();
 			$this->pdo->commit();
 			return $stmt->rowCount() > 0;
@@ -668,7 +714,7 @@ class DBAccess{
 	// 			'DELETE FROM spot_like
 	// 			 WHERE spot_id = :sid';
 	// 		$stmt = $this->pdo->prepare($sql);
-	// 		$stmt->bindParam(':sid', $spotId);
+	// 		$stmt->bindValue(':sid', $spotId);
 	// 		$stmt->execute();
 	// 		$this->pdo->commit();
 	// 		return $stmt->rowCount() !== 0;
