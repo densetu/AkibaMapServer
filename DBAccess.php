@@ -78,9 +78,9 @@ class DBAccess{
 	public function getUserByServiceLoginUserData($data){
 		try{
 			$output = null;
-			if($data instanceof ServiceLoginUserData)
+			if(!($data instanceof ServiceLoginUserData))
 				return null;
-			$query = "select * from users where token=:token && tokenSecret=:secret && service=:service;";
+			$query = "select * from users where token=:token & tokenSecret=:secret & service=:service;";
 			$stmt = $this->pdo->prepare($query);
 			$stmt->bindValue(":token",$data->getToken());
 			$stmt->bindValue(":secret",$data->getTokenSecret());
@@ -100,9 +100,9 @@ class DBAccess{
 	public function getUserByEmailLoginUserData($data){
 		try{
 			$output = null;
-			if($data instanceof EmailLoginUserData)
+			if(!($data instanceof EmailLoginUserData))
 				return null;
-			$query = "select * from users where email=:email && password=:password;";
+			$query = "select * from users where email=:email & password=:password;";
 			$stmt = $this->pdo->prepare($query);
 			$stmt->bindValue(":email",$data->getEmail());
 			$stmt->bindValue(":password",$data->getPassword());
@@ -116,6 +116,19 @@ class DBAccess{
 		}catch(Exception $e){
 			return null;
 		}
+	}
+	
+	public function isUserByUserData($data){
+		$user = null;
+		if($data instanceof EmailLoginUserData)
+			$user = $this->getUserByEmailLoginUserData($data);
+		else if($data instanceof ServiceLoginUserData)
+			$user = $this->getUserByServiceLoginUserData($data);
+		else
+			return false;
+		if(isset($user))
+			return true;
+		return false;
 	}
 
 	/*	spotテーブルのアクセスメソッド

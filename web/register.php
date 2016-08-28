@@ -13,7 +13,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST"){
 		$userdata = new EmailLoginUserData($json["email"],$json["password"]);
 	else
 		die(json_encode($output));
-	if($db->insertUser(new User(-1,$json["name"],$userdata,0))){
+	if($db->isUserByUserData($userdata)){
+		unset($output["error"]);
+		$output["result"] = true;
+	}else if($db->insertUser(new User(-1,$json["name"],$userdata,0))){
 		unset($output["error"]);
 		$output["result"] = true;
 	}
