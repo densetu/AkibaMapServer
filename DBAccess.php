@@ -88,17 +88,18 @@ class DBAccess{
 		try{
 			$output = null;
 			if(!($data instanceof ServiceLoginUserData))
-				return null;
-			$query = "select * from users where token=:token & tokenSecret=:secret & service=:service;";
+				return $output;
+			$query = "select * from users where token=:token and tokenSecret=:secret and service=:service;";
 			$stmt = $this->pdo->prepare($query);
 			$stmt->bindValue(":token",$data->getToken());
 			$stmt->bindValue(":secret",$data->getTokenSecret());
 			$stmt->bindValue(":service",$data->getToken());
 			$stmt->execute();
 			$row = $stmt->fetch();
-			
-			$userdata = new ServiceLoginUserData($row["token"],$row["tokenSecret"],$row["service"]);
-			$output = new User($row["id"],$row["name"],$userdata,$row["admin"]);
+			if($row !== false){
+				$userdata = new ServiceLoginUserData($row["token"],$row["tokenSecret"],$row["service"]);
+				$output = new User($row["id"],$row["name"],$userdata,$row["admin"]);
+			}
 			$stmt = null;
 			return $output;
 		}catch(Exception $e){
@@ -110,25 +111,27 @@ class DBAccess{
 		try{
 			$output = null;
 			if(!($data instanceof EmailLoginUserData))
-				return null;
-			$query = "select * from users where email=:email & password=:password;";
+				return $output;
+			$query = "select * from users where email=:email and password=:password;";
 			$stmt = $this->pdo->prepare($query);
 			$stmt->bindValue(":email",$data->getEmail());
 			$stmt->bindValue(":password",$data->getPassword());
 			$stmt->execute();
 			$row = $stmt->fetch();
-			
-			$userdata = new EmailLoginUserData($row["email"],$row["password"]);
-			$output = new User($row["id"],$row["name"],$userdata,$row["admin"]);
+			if($row !== false){
+				$userdata = new EmailLoginUserData($row["email"],$row["password"]);
+				$output = new User($row["id"],$row["name"],$userdata,$row["admin"]);
+			}
 			$stmt = null;
 			return $output;
 		}catch(Exception $e){
+			echo $e->getMessage();
 			return null;
 		}
 	}
 	
 	public function isUserByUserData($data){
-		return !is_null($this->getUserByUserData($data));
+		return $this->getUserByUserData($data) !== null;
 	}
 
 	/*	spotテーブルのアクセスメソッド
