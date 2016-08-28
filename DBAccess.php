@@ -74,8 +74,17 @@ class DBAccess{
 			return null;
 		}
 	}
+	
+	public function getUserByUserData($data){
+		$user = null;
+		if($data instanceof EmailLoginUserData)
+			$user = $this->getUserByEmailLoginUserData($data);
+		else if($data instanceof ServiceLoginUserData)
+			$user = $this->getUserByServiceLoginUserData($data);
+		return $user;
+	}
 
-	public function getUserByServiceLoginUserData($data){
+	private function getUserByServiceLoginUserData($data){
 		try{
 			$output = null;
 			if(!($data instanceof ServiceLoginUserData))
@@ -97,7 +106,7 @@ class DBAccess{
 		}
 	}
 
-	public function getUserByEmailLoginUserData($data){
+	private function getUserByEmailLoginUserData($data){
 		try{
 			$output = null;
 			if(!($data instanceof EmailLoginUserData))
@@ -119,16 +128,7 @@ class DBAccess{
 	}
 	
 	public function isUserByUserData($data){
-		$user = null;
-		if($data instanceof EmailLoginUserData)
-			$user = $this->getUserByEmailLoginUserData($data);
-		else if($data instanceof ServiceLoginUserData)
-			$user = $this->getUserByServiceLoginUserData($data);
-		else
-			return false;
-		if(isset($user))
-			return true;
-		return false;
+		return !is_null($this->getUserByUserData($data));
 	}
 
 	/*	spotテーブルのアクセスメソッド
