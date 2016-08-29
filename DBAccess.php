@@ -133,7 +133,8 @@ class DBAccess{
 	public function isUserByUserData($data){
 		return $this->getUserByUserData($data) !== null;
 	}
-
+	
+	
 	/*	spotテーブルのアクセスメソッド
 		insertSpot($spot)
 			引数に渡したSpotインスタンスのデータを登録

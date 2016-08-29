@@ -14,7 +14,7 @@ class User{
 	}
 	
 	public function getId(){
-		return $this->id;
+		return (int)$this->id;
 	}
 	
 	public function getName(){
@@ -47,6 +47,10 @@ class User{
 	
 	public function getAdmin(){
 		return $this->admin == 1;
+	}
+	
+	public function getUserData(){
+		return $this->userdata;
 	}
 	
 	public function setId($id){
