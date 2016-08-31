@@ -1,5 +1,6 @@
 <?php
-require_once("config.php");
+$output = ["error"=>"login error.","result"=>false];
+require_once("register_config.php");
 function success($output,$data){
 	$output["id"] = $data->getId();
 	$output["name"] = $data->getName();
@@ -8,7 +9,6 @@ function success($output,$data){
 	$output["result"] = true;
 	return $output;
 }
-$output = ["error"=>"login error.","result"=>false];
 if ($_SERVER["REQUEST_METHOD"] === "POST"){
 	$input = file_get_contents("php://input");
 	$json = @json_decode($input,true);

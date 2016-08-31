@@ -1,6 +1,6 @@
 <?php
-require_once("config.php");
 $output = ["error"=>"register error.","result"=>false];
+require_once("register_config.php");
 if ($_SERVER["REQUEST_METHOD"] === "POST"){
 	$input = file_get_contents("php://input");
 	$json = @json_decode($input,true);
