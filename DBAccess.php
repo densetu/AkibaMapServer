@@ -158,7 +158,7 @@ class DBAccess{
 			$this->pdo->beginTransaction();
 			$sql =
 				'INSERT INTO spot(name, address, description, lat, lng, user_id)
-				 VALUES(:name, :address, :description, :lat, :lng, :category_id, :user_id)';
+				 VALUES(:name, :address, :description, :lat, :lng, :user_id)';
 			$stmt = $this->pdo->prepare($sql);
 			$stmt->bindValue(':name', $spot->getName());
 			$stmt->bindValue(':address', $spot->getAddress());
