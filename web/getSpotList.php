@@ -11,15 +11,16 @@ try{
 		$output["data"] = [];
 		foreach($spotList as $spot){
 			$data = [];
-			$data["id"] = $spot->getId();
+			$data["id"] = (int)$spot->getId();
 			$data["name"] = $spot->getName();
 			$data["address"] = $spot->getAddress();
 			$data["description"] = $spot->getDescription();
-			$data["lat"] = $spot->getLat();
-			$data["lng"] = $spot->getLng();
-			$data["user_id"] = $spot->getUserId();
+			$data["lat"] = (double)$spot->getLat();
+			$data["lng"] = (double)$spot->getLng();
+			$data["user_id"] = (int)$spot->getUserId();
 			$output["data"][] = $data;
 		}
+		$output["result"] = true;
 	}
 	throw new Exception(json_encode($output));
 }catch(Exception $e){

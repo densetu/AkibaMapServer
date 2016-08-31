@@ -207,7 +207,7 @@ class DBAccess{
 		$spotList = array();
 		try{
 			$sql =
-				'SELECT id, name, address, description, lat, lng, category_id, user_id
+				'SELECT id, name, address, description, lat, lng, user_id
 				 FROM spot
 				 ORDER BY id';
 			$stmt = $this->pdo->prepare($sql);
@@ -234,7 +234,7 @@ class DBAccess{
 	public function getSpot($id){
 		try{
 			$sql =
-				'SELECT id, name, address, description, lat, lng, category_id, user_id
+				'SELECT id, name, address, description, lat, lng, user_id
 				 FROM spot
 				 WHERE id = :id';
 			$stmt = $this->pdo->prepare($sql);

@@ -7,19 +7,20 @@ try{
 		$spot_id = isset($_GET["id"]) ? $_GET["id"] : null;
 		if($spot_id == null)
 			throw new Exception(json_encode($output));
-		$spot = $db->getSpot($spot_id);
+		$spot = $db->getSpot((int)$spot_id);
 		if($spot == null)
-			throw new Exception(json_encode($output));
+			throw new Exception(json_encode([$output]));
 		unset($output["error"]);
 		$data = [];
-		$data["id"] = $spot->getId();
+		$data["id"] = (int)$spot->getId();
 		$data["name"] = $spot->getName();
 		$data["address"] = $spot->getAddress();
 		$data["description"] = $spot->getDescription();
-		$data["lat"] = $spot->getLat();
-		$data["lng"] = $spot->getLng();
-		$data["user_id"] = $spot->getUserId();
+		$data["lat"] = (double)$spot->getLat();
+		$data["lng"] = (double)$spot->getLng();
+		$data["user_id"] = (int)$spot->getUserId();
 		$output["data"] = [$data];
+		$output["result"] = true;
 	}
 	throw new Exception(json_encode($output));
 }catch(Exception $e){
