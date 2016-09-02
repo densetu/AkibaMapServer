@@ -7,7 +7,9 @@ class Spot{
 	private $lat;
 	private $lng;
 	private $userId;
-
+	
+	private $spotCategories;
+	private $spotImages;
 
 	public function setId($id){
 		$this->id = $id;
@@ -63,5 +65,21 @@ class Spot{
 
 	public function getUserId(){
 		return $this->userId;
+	}
+
+	public function setSpotCategories($spotCategories){
+		$this->spotCategories = $spotCategories;
+	}
+
+	public function getSpotCategories(){
+		return $this->spotCategories;
+	}
+
+	public function setSpotImages($spotImages){
+		$this->spotImages = $spotImages;
+	}
+
+	public function getSpotImages(){
+		return $this->spotImages;
 	}
 }

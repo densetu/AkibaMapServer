@@ -12,7 +12,7 @@ class DBAccess{
 			throw new AccessException($e->getMessage());
 		}
 	}
-	
+
 	public function __destruct(){
 		$this->pdo = null;
 	}
@@ -74,7 +74,7 @@ class DBAccess{
 			return null;
 		}
 	}
-	
+
 	public function getUserByUserData($data){
 		$user = null;
 		if($data instanceof EmailLoginUserData)
@@ -129,12 +129,12 @@ class DBAccess{
 			return null;
 		}
 	}
-	
+
 	public function isUserByUserData($data){
 		return $this->getUserByUserData($data) !== null;
 	}
-	
-	
+
+
 	/*	spotテーブルのアクセスメソッド
 		insertSpot($spot)
 			引数に渡したSpotインスタンスのデータを登録
@@ -167,9 +167,30 @@ class DBAccess{
 			$stmt->bindValue(':lng', $spot->getLng());
 			$stmt->bindValue(':user_id', $spot->getUserId());
 			$stmt->execute();
+
+			$spot_id = $this->getSpotBySpotInstance($spot)->getId();
+
+			$images = $spot->getSpotImages();
+			foreach($images as $image){
+				$image->setId($spot_id);
+				$flag = $this->insertSpotImage($image,false);
+				if($flag === false)
+					throw new Exception("image set error.");
+			}
+
+			$categories = $spot->getSpotCategories();
+			foreach($categories as $category){
+				$category->setSpotId($spot_id);
+				$flag = $this->insertSpotCategory($category,false);
+				if($flag === false)
+					throw new Exception("category set error.");
+			}
+
 			$this->pdo->commit();
+
 			return true;
 		}catch(Exception $e){
+			throw new AccessException($e->getMessage());
 			$this->pdo->rollback();
 			return false;
 		}
@@ -188,6 +209,7 @@ class DBAccess{
 							user_id = :user_id
 				 WHERE id = :id';
 			$stmt = $this->pdo->prepare($sql);
+			$stmt->bindValue(':id', $spot->getId());
 			$stmt->bindValue(':name', $spot->getName());
 			$stmt->bindValue(':address', $spot->getAddress());
 			$stmt->bindValue(':description', $spot->getDescription());
@@ -195,7 +217,19 @@ class DBAccess{
 			$stmt->bindValue(':lng', $spot->getLng());
 			$stmt->bindValue(':user_id', $spot->getUserId());
 			$stmt->execute();
+
+			$images = $spot->getSpotImages();
+			$this->deleteAllSpotImage($spot->getId());
+			foreach($images as $image)
+				$this->insertSpotImage($image,false);
+
+			$categories = $spot->getSpotCategories();
+			$this->deleteAllSpotCategory($spot->getId());
+			foreach($categories as $category)
+				$this->insertSpotCategory($category,false);
+
 			$this->pdo->commit();
+
 			return true;
 		}catch(Exception $e){
 			$this->pdo->rollback();
@@ -222,6 +256,8 @@ class DBAccess{
 				$spot->setLat($row['lat']);
 				$spot->setLng($row['lng']);
 				$spot->setUserId($row['user_id']);
+				$spot->setSpotImages($this->getSpotImage($row['id']));
+				$spot->setSpotCategories($this->getSpotCategoryBySID($row['id']));
 				$spotList[] = $spot;
 			}
 			return $spotList;
@@ -250,9 +286,44 @@ class DBAccess{
 			$spot->setLat($row['lat']);
 			$spot->setLng($row['lng']);
 			$spot->setUserId($row['user_id']);
+			$spot->setSpotImages($this->getSpotImage($row['id']));
+			$spot->setSpotCategories($this->getSpotCategoryBySID($row['id']));
 			return $spot;
 		}catch(PDOException $e){
 			// throw new AccessException($e->getMessage());
+			return null;
+		}
+	}
+
+	public function getSpotBySpotInstance($spot){
+		try{
+			$sql =
+				'SELECT id, name, address, description, lat, lng, user_id
+				 FROM spot
+				 WHERE name=:name and address=:address and description=:description and lat=:lat and lng=:lng and user_id=:user_id';
+			$stmt = $this->pdo->prepare($sql);
+			$stmt->bindValue(':name', $spot->getName());
+			$stmt->bindValue(':address', $spot->getAddress());
+			$stmt->bindValue(':description', $spot->getDescription());
+			$stmt->bindValue(':lat', $spot->getLat());
+			$stmt->bindValue(':lng', $spot->getLng());
+			$stmt->bindValue(':user_id', $spot->getUserId());
+			$stmt->execute();
+			$row = $stmt->fetch();
+
+			$spot = new Spot();
+			$spot->setId($row['id']);
+			$spot->setName($row['name']);
+			$spot->setAddress($row['address']);
+			$spot->setDescription($row['description']);
+			$spot->setLat($row['lat']);
+			$spot->setLng($row['lng']);
+			$spot->setUserId($row['user_id']);
+			$spot->setSpotImages($this->getSpotImage($row['id']));
+			$spot->setSpotCategories($this->getSpotCategoryBySID($row['id']));
+			return $spot;
+		}catch(PDOException $e){
+			throw new AccessException($e->getMessage());
 			return null;
 		}
 	}
@@ -289,17 +360,19 @@ class DBAccess{
 			戻り値 削除成功時 true、失敗時 false
 	*/
 
-	public function insertSpotImage($spotImage){
+	public function insertSpotImage($spotImage,$transaction = true){
 		$sql =
 			'INSERT INTO spot_images(id, path)
 			 VALUES (:id, :path)';
 		try{
-			$this->pdo->beginTransaction();
+			if($transaction)
+				$this->pdo->beginTransaction();
 			$stmt = $this->pdo->prepare($sql);
 			$stmt->bindValue(':id', $spotImage->getId());
 			$stmt->bindValue(':path', $spotImage->getPath());
 			$stmt->execute();
-			$this->pdo->commit();
+			if($transaction)
+				$this->pdo->commit();
 			return true;
 		}catch(Exception $e){
 			$this->pdo->rollback();
@@ -396,10 +469,9 @@ class DBAccess{
 		try{
 			$this->pdo->beginTransaction();
 			$sql =
-				'INSERT INTO category_name(id, name, parent_id)
-				 VALUES (:id, :name, :p_id)';
+				'INSERT INTO category_name(name, parent_id)
+				 VALUES (:name, :p_id)';
 			$stmt = $this->pdo->prepare($sql);
-			$stmt->bindValue(':id', $categoryName->getId());
 			$stmt->bindValue(':name', $categoryName->getName());
 			$stmt->bindValue(':p_id', $categoryName->getParentId());
 			$stmt->execute();
@@ -511,9 +583,10 @@ class DBAccess{
 			戻り値 削除成功時 true、失敗時 false
 	*/
 
-	public function insertSpotCategory($spotCategory){
+	public function insertSpotCategory($spotCategory,$transaction = true){
 		try{
-			$this->pdo->beginTransaction();
+			if($transaction)
+				$this->pdo->beginTransaction();
 			$sql =
 				'INSERT INTO spot_category(spot_id, category_id)
 				 VALUES (:s_id, :c_id)';
@@ -521,7 +594,8 @@ class DBAccess{
 			$stmt->bindValue(':s_id', $spotCategory->getSpotId());
 			$stmt->bindValue(':c_id', $spotCategory->getCategoryId());
 			$stmt->execute();
-			$this->pdo->commit();
+			if($transaction)
+				$this->pdo->commit();
 			return true;
 		} catch (Exception $e){
 			$this->pdo->rollback();
@@ -538,7 +612,7 @@ class DBAccess{
 				 WHERE spot_id = :id';
 			$stmt = $this->pdo->prepare($sql);
 			$stmt->bindValue(':id', $spotId);
-			$stmt->execute;
+			$stmt->execute();
 			$result = $stmt->fetchAll();
 			foreach ($result as $row) {
 				$sc = new SpotCategory();
