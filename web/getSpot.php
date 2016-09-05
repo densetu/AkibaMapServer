@@ -19,6 +19,17 @@ try{
 		$data["lat"] = (double)$spot->getLat();
 		$data["lng"] = (double)$spot->getLng();
 		$data["user_id"] = (int)$spot->getUserId();
+		$categories = [];
+		foreach ($spot->getSpotCategories() as $category) {
+			$categories[] = (int)$category->getCategoryId();
+		}
+		$data["categories"] = $categories;
+		$images = [];
+		foreach ($spot->getSpotImages() as $image) {
+			$images[] = $image->getPath();
+		}
+		$data["images"] = $images;
+
 		$output["data"] = [$data];
 		$output["result"] = true;
 	}
